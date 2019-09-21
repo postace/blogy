@@ -6,6 +6,7 @@ from flask_jwt_extended import (create_access_token,
                                 get_jwt_identity)
 
 from . import api
+from .errors import not_found, bad_request, conflict
 from .. import db
 from ..models import User
 
@@ -92,21 +93,3 @@ def login_or_register():
             })
     else:
         return bad_request('Unknown login type. Must be facebook or google')
-
-
-def bad_request(message):
-    response = jsonify({'error': 'bad request', 'message': message})
-    response.status_code = 400
-    return response
-
-
-def not_found(message):
-    response = jsonify({'error': 'bad request', 'message': message})
-    response.status_code = 404
-    return response
-
-
-def conflict(message):
-    response = jsonify({'error': 'conflict', 'message': message})
-    response.status_code = 409
-    return response

@@ -1,7 +1,8 @@
 from flask import jsonify, request, g, current_app, url_for
 
 from . import api
-from .authentication import LoginType, bad_request
+from .authentication import LoginType
+from .errors import bad_request
 from .. import db
 from ..models import Post
 

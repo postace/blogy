@@ -36,6 +36,7 @@ class Post(db.Model):
     content = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow())
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    likes = db.relationship('Like', backref='post', lazy='dynamic')
 
     def to_json(self):
         json_post = {
@@ -55,3 +56,11 @@ class Post(db.Model):
                 or content is None or content == '':
             raise ValidationError('title and content is required for post')
         return Post(title=title, content=content)
+
+
+class Like(db.Model):
+    __tablename__ = 'likes'
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    author_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    post_id = db.Column(db.Integer, db.ForeignKey('posts.id'))

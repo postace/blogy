@@ -1,11 +1,34 @@
-from flask import jsonify, request, g
+from flask import jsonify, url_for, request, g, current_app
 
 from . import api
 from .. import db
 from ..models import Post
 
 
-@api.route('/posts/<int:id>')
+@api.route('/posts', methods=['GET'])
+def get_posts():
+    page = request.args.get('page', 1, type=int)
+    pagination = Post.query.paginate(
+        page, per_page=current_app.config['BLOGY_POSTS_PER_PAGE'],
+        error_out=False
+    )
+    posts = pagination.items
+
+    page_prev = None
+    if pagination.has_prev:
+        page_prev = url_for('api.get_posts', page=page - 1)
+    page_next = None
+    if pagination.has_next:
+        page_next = url_for('api.get_posts', page=page + 1)
+    return jsonify({
+        'posts': [post.to_json() for post in posts],
+        'prev': page_prev,
+        'next': page_next,
+        'count': pagination.total
+    })
+
+
+@api.route('/posts/<int:id>', methods=['GET'])
 def get_post(id):
     post = Post.query.get_or_404(id)
     return jsonify(post.to_json())

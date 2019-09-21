@@ -22,6 +22,6 @@ class User(db.Model):
             'email': self.email,
             'name': self.name,
             'member_since': self.member_since,
-            'has_enough_info': self.has_required_info
+            'has_required_info': self.has_required_info
         }
         return json_user

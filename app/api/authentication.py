@@ -7,6 +7,7 @@ from flask_jwt_extended import (create_access_token,
 
 from . import api
 from .errors import not_found, bad_request, conflict, unauthorized
+from ..exceptions import OAuthTokenError
 from .. import db
 from ..models import User
 
@@ -96,11 +97,13 @@ def fetch_social_user(login_type, token):
         social_user = SocialUser(
             gg_user.get('email'), gg_user.get('sub'), LoginType.GOOGLE)
     elif login_type.upper() == LoginType.FACEBOOK:
-        graph = facebook.GraphAPI(access_token=token, version='3.1')
-        fb_user = graph.get_object('me?fields=id,name,email')
-        social_user = SocialUser(
-            fb_user.get('email'), fb_user.get('id'), LoginType.FACEBOOK)
-
+        try:
+            graph = facebook.GraphAPI(access_token=token, version='3.1')
+            fb_user = graph.get_object('me?fields=id,name,email')
+            social_user = SocialUser(
+                fb_user.get('email'), fb_user.get('id'), LoginType.FACEBOOK)
+        except facebook.GraphAPIError:
+            raise OAuthTokenError('Invalid OAuth token or expired')
     return social_user
 
 

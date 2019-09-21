@@ -1,5 +1,5 @@
 from flask import jsonify
-from app.exceptions import ValidationError
+from app.exceptions import ValidationError, OAuthTokenError
 from . import api
 
 
@@ -36,3 +36,8 @@ def conflict(message):
 @api.errorhandler(ValidationError)
 def validation_error(e):
     return bad_request(e.args[0])
+
+
+@api.errorhandler(OAuthTokenError)
+def oauth_token_error(e):
+    return unauthorized(e.args[0])

@@ -1,6 +1,6 @@
-# Blogy application
+# Blogy REST application
 
-A blog post app for our life
+A Restful API blog post app for our life
 
 ## Getting started
 

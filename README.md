@@ -5,7 +5,6 @@ A blog post app for our life
 ## Getting started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
-See deployment for notes on how to deploy the project on a live system.
 
 ### Prerequisites
 
@@ -51,11 +50,16 @@ $ source venv/bin/activate
 
 If you're intended to running development then run this command
 ```shell script
-$ pip install -r requirements/dev.txt
+(venv) $ pip install -r requirements/dev.txt
 ```
 Otherwise, run this command to install production dependencies
 ```shell script
-$ pip install -r requirements/prod.txt
+(venv) $ pip install -r requirements/prod.txt
+```
+
+Then run these migrations to create database schema
+```shell script
+(venv) $ flask db upgrade
 ```
 
 ### Running the development environment
@@ -108,5 +112,12 @@ curl -X POST \
 }'
 ```
 
-You will be received an access token after sending one of these two request above.
-This token will be used for subsequent request to our app.
+You will be received a JWT token after register user success.
+
+This JWT token will be used for subsequent request to our app.
+
+Please note that, after register with Facebook/Google, you have to provide
+(name, phone number) or (phone, occupation) to continue using blogy.
+
+Otherwise, it will throw error indicate that these information is required.  
+Open file `app/api/users.py` and see method `supply_required_info()` for more detail  

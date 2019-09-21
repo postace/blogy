@@ -18,8 +18,8 @@ class LoginType:
 GOOGLE_OAUTH2_API_URL = 'https://oauth2.googleapis.com'
 
 
-@api.before_app_request
-def before_app_request():
+@api.before_request
+def before_request():
     """ Every route except auth/login will require authentication """
     if 'auth/login' not in request.path:
         user_id = get_user_id()

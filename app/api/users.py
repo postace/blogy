@@ -40,7 +40,7 @@ def supply_required_info():
     return jsonify({'message': 'Supply information succeed', 'user': user.to_json()})
 
 
-@api.route('/users/<int:user_id>/posts')
+@api.route('/users/<int:user_id>/posts', methods=['GET'])
 def get_user_posts(user_id):
     user = g.current_user
     page = request.args.get('page', 1, type=int)

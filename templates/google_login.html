@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id"
+          content="593961761057-u9ptrtnjptm64r9c3ei65m52lrn54hq8.apps.googleusercontent.com">
+    <script>
+        // Retrieving id token from google
+        function onSignIn(googleUser) {
+            const id_token = googleUser.getAuthResponse().id_token;
+            document.getElementById("token-label").innerText =
+                "Google id token: " + id_token;
+        }
+    </script>
+    <title>Sigin as Google</title>
+</head>
+
+<body>
+    <div class="g-signin2" data-onsuccess="onSignIn" style="align-content: center"></div>
+    <p id="token-label" ></p>
+</body>
+
+</html>

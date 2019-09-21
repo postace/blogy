@@ -76,3 +76,37 @@ Then run it using:
 $ flask run
 ```
 
+## Register user from Facebook and Google
+After running app, we can login to our app using Facebook and Google.
+
+Go to `http://localhost:5000/facebook-login` to login with Facebook and copy the Facebook's access token
+
+Go to `http://localhost:5000/google-login` to login with Google and copy the Google's access token
+
+These tokens will be used to register user to our app.
+
+To register user from Google, issue the following request from cmd:
+
+```shell script
+curl -X POST \
+  http://localhost:5000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"login_type": "google",
+	"token": "YOUR_GOOGLE_TOKEN_HERE"
+}'
+```
+
+Similarly with register Facebook
+```shell script
+curl -X POST \
+  http://localhost:5000/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"login_type": "facebook",
+	"token": "YOUR_FACEBOOK_TOKEN_HERE"
+}'
+```
+
+You will be received an access token after sending one of these two request above.
+This token will be used for subsequent request to our app.

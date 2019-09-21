@@ -60,11 +60,16 @@ def get_user_like_post(post_id):
 
 @api.route('/posts/<int:post_id>/like', methods=['POST'])
 def like_post(post_id):
+    current_user = g.current_user
+    like = Like.query \
+        .filter(Like.post_id == post_id, Like.author_id == current_user.id).first()
+    if like:
+        return jsonify({'message': 'You already liked this post'}), 400
+
     post = Post.query.get_or_404(post_id)
     like = Like()
     like.post = post
-    like.author = g.current_user
-
+    like.author = current_user
     db.session.add(like)
     db.session.commit()
 

@@ -57,3 +57,17 @@ def like_post(post_id):
     db.session.commit()
 
     return jsonify({'message': 'Like succeed'}), 201
+
+
+@api.route('/posts/<int:post_id>/dislike', methods=['POST'])
+def dislike_post(post_id):
+    user = g.current_user
+    like = Like.query \
+        .filter(Like.post_id == post_id, Like.author_id == user.id).first()
+
+    if like is not None:
+        db.session.delete(like)
+        db.session.commit()
+        return jsonify({'message': 'Dislike succeed'}), 200
+
+    return jsonify({'message': 'You are not like this post'}), 400

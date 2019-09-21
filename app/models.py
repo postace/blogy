@@ -65,3 +65,10 @@ class Like(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     author_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('posts.id'), nullable=False)
+
+    def to_json(self):
+        json_like = {
+            'author_id': self.author_id,
+            'post_id': self.post_id
+        }
+        return json_like

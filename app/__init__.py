@@ -1,8 +1,11 @@
 from flask import Flask
+from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
+
 from config import config
 
 db = SQLAlchemy()
+jwt = JWTManager()
 
 
 def create_app(config_name):
@@ -11,9 +14,10 @@ def create_app(config_name):
     config[config_name].init_app(app)
 
     db.init_app(app)
+    # Register jwt extension
+    jwt.init_app(app)
 
     from .api import api as api_blueprint
     app.register_blueprint(api_blueprint, url_prefix='/api')
 
     return app
-

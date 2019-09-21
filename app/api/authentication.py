@@ -1,6 +1,7 @@
 import facebook
 import requests
 from flask import jsonify, request
+from flask_jwt_extended import create_access_token
 
 from . import api
 from .. import db
@@ -35,18 +36,20 @@ def login_or_register():
                                   "/tokeninfo?id_token=" + token)
         google_user = google_res.json()
         # Check email
-        google_email = google_user.get('email', None)
+        google_email = google_user.get('email')
         user = User.query.filter_by(email=google_email.lower()).first()
         if user:
             return conflict('An account with this email already exist')
         else:
-            user = User(email=google_email, member_from=LoginType.GOOGLE)
-            user.gg_id = google_user.get('sub', '')
+            user = User(email=google_email.lower(), member_from=LoginType.GOOGLE)
+            user.gg_id = google_user.get('sub')
 
             db.session.add(user)
             db.session.commit()
+
             return jsonify({
-                'user': user.to_json()
+                'user': user.to_json(),
+                'access_token': create_access_token(identity=user.id)
             })
     elif login_type.upper() == LoginType.FACEBOOK:
         graph = facebook.GraphAPI(access_token=token, version='3.1')
@@ -57,13 +60,14 @@ def login_or_register():
         if user:
             return conflict('An account with this email already exist')
         else:
-            user = User(email=facebook_email, member_from=LoginType.FACEBOOK)
-            user.fb_id = facebook_user.get('id', '')
+            user = User(email=facebook_email.lower(), member_from=LoginType.FACEBOOK)
+            user.fb_id = facebook_user.get('id')
 
             db.session.add(user)
             db.session.commit()
             return jsonify({
-                'user': user.to_json()
+                'user': user.to_json(),
+                'access_token': create_access_token(identity=user.id)
             })
     else:
         return bad_request('Unknown login type. Must be facebook or google')

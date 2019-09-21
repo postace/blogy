@@ -41,7 +41,8 @@ def before_request():
             return not_found("User not found with id {}".format(user_id))
 
         if user_not_going_to_provide_required_info(request, user):
-            return bad_request("You have to provide the required info to using this feature")
+            return bad_request("Please supply the required info at API: "
+                               "/api/me/supply-info before using this feature")
 
         # Set global user
         g.current_user = user

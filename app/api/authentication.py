@@ -1,18 +1,13 @@
 import facebook
 import requests
-from flask import jsonify, request
-from flask_jwt_extended import create_access_token
+from flask import jsonify, request, g
+from flask_jwt_extended import (create_access_token,
+                                jwt_required,
+                                get_jwt_identity)
 
 from . import api
 from .. import db
 from ..models import User
-
-
-@api.before_request
-def before_request():
-    # Check if route is /auth/login then we do not need to validate them
-    # Otherwise, check if user does not have enough information and return err
-    print("Incoming request path ", request.path)
 
 
 class LoginType:
@@ -21,6 +16,32 @@ class LoginType:
 
 
 GOOGLE_OAUTH2_API_URL = 'https://oauth2.googleapis.com'
+
+
+@api.before_app_request
+def before_app_request():
+    """ Every route except auth/login will require authentication """
+    if 'auth/login' not in request.path:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+        if not user:
+            return not_found("User not found with id {}" % user_id)
+
+        if user_not_going_to_provide_required_info(request, user):
+            return bad_request("You have to provide the required info to using this feature")
+
+        # Set global user
+        g.current_user = user
+
+
+@jwt_required
+def get_user_id():
+    return get_jwt_identity()
+
+
+def user_not_going_to_provide_required_info(req, user):
+    return 'me/supply-info' not in req.path \
+            and not user.has_required_info
 
 
 @api.route('/auth/login', methods=['POST'])
@@ -76,6 +97,12 @@ def login_or_register():
 def bad_request(message):
     response = jsonify({'error': 'bad request', 'message': message})
     response.status_code = 400
+    return response
+
+
+def not_found(message):
+    response = jsonify({'error': 'bad request', 'message': message})
+    response.status_code = 404
     return response
 
 

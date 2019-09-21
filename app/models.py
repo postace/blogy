@@ -17,6 +17,7 @@ class User(db.Model):
     member_since = db.Column(db.DateTime(), default=datetime.utcnow())
     has_required_info = db.Column(db.Boolean, default=False, nullable=False)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
+    likes = db.relationship('Like', backref='author', lazy='dynamic')
 
     def to_json(self):
         json_user = {

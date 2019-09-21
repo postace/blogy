@@ -2,7 +2,7 @@ from flask import jsonify, url_for, request, g, current_app
 
 from . import api
 from .. import db
-from ..models import Post
+from ..models import Post, Like
 
 
 @api.route('/posts', methods=['GET'])
@@ -44,3 +44,16 @@ def new_post():
     db.session.commit()
 
     return jsonify(post.to_json()), 201
+
+
+@api.route('/posts/<int:post_id>/like', methods=['POST'])
+def like_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    like = Like()
+    like.post = post
+    like.author = g.current_user
+
+    db.session.add(like)
+    db.session.commit()
+
+    return jsonify({'message': 'Like succeed'}), 201

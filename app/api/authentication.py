@@ -10,13 +10,25 @@ from .errors import not_found, bad_request, conflict, unauthorized
 from .. import db
 from ..models import User
 
+GOOGLE_OAUTH2_API_URL = 'https://oauth2.googleapis.com'
+
 
 class LoginType:
     FACEBOOK = 'FACEBOOK'
     GOOGLE = 'GOOGLE'
 
+    @staticmethod
+    def is_unknown(type_to_check: str):
+        return type_to_check is not None and \
+               type_to_check.upper() != LoginType.GOOGLE and \
+               type_to_check.upper() != LoginType.FACEBOOK
 
-GOOGLE_OAUTH2_API_URL = 'https://oauth2.googleapis.com'
+
+class SocialUser:
+    def __init__(self, email, id, login_from):
+        self.email = email
+        self.id = id
+        self.login_from = login_from
 
 
 @api.before_request
@@ -50,43 +62,63 @@ def login_or_register():
     req_body = request.json
     login_type = req_body.get('login_type')
     token = req_body.get('token')
-    if login_type is None or token is None:
-        return bad_request("login_type and token is required")
+    if token is None:
+        return bad_request("Token is required")
+    if LoginType.is_unknown(login_type):
+        return bad_request('Unknown login type. Must be facebook or google')
 
+    social_user = fetch_social_user(login_type, token)
+    if social_user.email is None or social_user.email == '':
+        return unauthorized('Email not found when login {}'
+                            .format(social_user.login_from))
+    user = User.query.filter_by(email=social_user.email.lower()).first()
+
+    if exist_user_login(user, login_type.upper()):
+        return jsonify({
+            'user': user.to_json(),
+            'access_token': create_access_token(identity=user.id)})
+    if same_email_login_from_other_source(user, login_type.upper()):
+        return conflict('An account with email {} already exist'.format(social_user.email))
+
+    user = save_new_user(social_user)
+    return jsonify({
+        'user': user.to_json(),
+        'access_token': create_access_token(identity=user.id)})
+
+
+def fetch_social_user(login_type, token):
+    social_user = SocialUser(None, None, None)
     if login_type.upper() == LoginType.GOOGLE:
         google_res = requests.get(GOOGLE_OAUTH2_API_URL +
                                   "/tokeninfo?id_token=" + token)
         gg_user = google_res.json()
-        return new_user_with_type(gg_user.get('email'),
-                                  LoginType.GOOGLE,
-                                  gg_user.get('sub'))
+        social_user = SocialUser(
+            gg_user.get('email'), gg_user.get('sub'), LoginType.GOOGLE)
     elif login_type.upper() == LoginType.FACEBOOK:
         graph = facebook.GraphAPI(access_token=token, version='3.1')
         fb_user = graph.get_object('me?fields=id,name,email')
+        social_user = SocialUser(
+            fb_user.get('email'), fb_user.get('id'), LoginType.FACEBOOK)
 
-        return new_user_with_type(fb_user.get('email'),
-                                  LoginType.FACEBOOK,
-                                  fb_user.get('id'))
-    else:
-        return bad_request('Unknown login type. Must be facebook or google')
+    return social_user
 
 
-def new_user_with_type(email, login_from, third_party_id):
-    if email is None or email == '':
-        return unauthorized('Error when login {}'.format(login_from))
-    user = User.query.filter_by(email=email.lower()).first()
-    if user:
-        return conflict('An account with email {} already exist'.format(email))
+def exist_user_login(user: User, login_from: str) -> bool:
+    return user and user.member_from == login_from
 
-    user = User(email=email.lower(), member_from=login_from)
-    if login_from == LoginType.FACEBOOK:
-        user.fb_id = third_party_id
-    elif login_from == LoginType.GOOGLE:
-        user.gg_id = third_party_id
 
+def same_email_login_from_other_source(user: User, login_from: str) -> bool:
+    return user and user.member_from != login_from
+
+
+def save_new_user(social_user: SocialUser) -> User:
+    user = User(email=social_user.email.lower(),
+                member_from=social_user.login_from.upper())
+
+    if social_user.login_from == LoginType.FACEBOOK:
+        user.fb_id = social_user.id
+    elif social_user.login_from == LoginType.GOOGLE:
+        user.gg_id = social_user.id
     db.session.add(user)
     db.session.commit()
-    return jsonify({
-        'user': user.to_json(),
-        'access_token': create_access_token(identity=user.id)
-    })
+    return user

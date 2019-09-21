@@ -46,7 +46,8 @@ class Post(db.Model):
             'title': self.title,
             'content': self.content,
             'timestamp': self.timestamp,
-            'author_id': self.author_id
+            'author_id': self.author_id,
+            'like_label': self.like_label
         }
         return json_post
 

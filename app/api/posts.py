@@ -71,6 +71,11 @@ def like_post(post_id):
     like.post = post
     like.author = current_user
     db.session.add(like)
+
+    all_like = post.likes.all()
+    post.like_label = build_like_label(all_like)
+    db.session.add(post)
+
     db.session.commit()
 
     return jsonify({'message': 'Like succeed'}), 201
@@ -82,9 +87,36 @@ def dislike_post(post_id):
     like = Like.query \
         .filter(Like.post_id == post_id, Like.author_id == user.id).first()
 
-    if like is not None:
-        db.session.delete(like)
-        db.session.commit()
-        return jsonify({'message': 'Dislike succeed'}), 200
+    if like is None:
+        return jsonify({'message': 'You are not like this post'}), 400
 
-    return jsonify({'message': 'You are not like this post'}), 400
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(like)
+
+    all_like = post.likes.all()
+    post.like_label = build_like_label(all_like)
+    db.session.add(post)
+
+    db.session.commit()
+    return jsonify({'message': 'Dislike succeed'}), 200
+
+
+def build_like_label(likes):
+    users = []
+    for like in likes:
+        user = User.query.get(like.author_id)
+        if user:
+            users.append(user)
+    total_like = len(users)
+
+    if total_like == 0:
+        like_content = ''
+    elif total_like == 1:
+        like_content = '{} thích bài viết này'.format(users[0].name)
+    elif total_like == 2:
+        like_content = '{} và {} thích bài viết này'.format(
+            users[0].name, users[1].name)
+    else:
+        like_content = '{}, {} và {} người khác thích bài viết này'.format(
+            users[0].name, users[1].name, total_like - 2)
+    return like_content
